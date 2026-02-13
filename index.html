@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tracker Cloud</title>
+<title>🔥 Tracker Cloud Pro</title>
 
 <style>
 body{
     font-family:Arial;
     text-align:center;
-    margin-top:40px;
+    margin-top:30px;
     background:#f4f6f9;
 }
 button{
-    padding:8px 15px;
+    padding:8px 14px;
     margin:5px;
     border:none;
     border-radius:8px;
@@ -21,25 +21,24 @@ button{
 }
 .btn-main{background:#2196F3;color:white;}
 .btn-add{background:#4CAF50;color:white;}
+.btn-undo{background:#ff9800;color:white;}
 .box{
-    width:60%;
+    width:65%;
     margin:auto;
     margin-top:15px;
     background:white;
     padding:12px;
     border-radius:8px;
     box-shadow:0 0 8px rgba(0,0,0,0.1);
+    text-align:left;
 }
-input{
-    padding:6px;
-    margin:5px;
-}
+input{padding:6px;margin:5px;}
 .hidden{display:none;}
 </style>
 </head>
 <body>
 
-<h2>🔥 Tracker Online</h2>
+<h2>🔥 Tracker Online Pro</h2>
 
 <button id="smokeBtn" class="btn-main">🚬 Hút thuốc</button>
 <button id="runBtn" class="btn-main">🏃 Chạy bộ</button>
@@ -50,104 +49,189 @@ input{
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } 
+import { getFirestore, doc, setDoc, getDoc }
 from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-/* 🔥 CONFIG CỦA ÔNG */
+/* CONFIG FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyDFgBUsVGUWoj-b2qGj4DyUpALlch2MSQ",
   authDomain: "bhtz-a7f60.firebaseapp.com",
   projectId: "bhtz-a7f60",
   storageBucket: "bhtz-a7f60.firebasestorage.app",
   messagingSenderId: "708884006477",
-  appId: "1:708884006477:web:de2a3e37f6513d6676be04",
-  measurementId: "G-V82LF2YGS4"
+  appId: "1:708884006477:web:de2a3e37f6513d6676be04"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let data = {};
-const today = new Date().toISOString().split("T")[0];
 
-/* LOAD DATA */
+/* LOAD */
 async function loadData(){
     const snap = await getDoc(doc(db,"tracker","main"));
-    if(snap.exists()){
-        data = snap.data();
-    }
-    render();
+    if(snap.exists()) data = snap.data();
+    renderSmoke();
+    renderRun();
 }
 
-/* SAVE DATA */
+/* SAVE */
 async function saveData(){
     await setDoc(doc(db,"tracker","main"), data);
 }
 
-/* INIT STRUCTURE */
-function ensureStructure(){
-    if(!data.smoke) data.smoke = {};
-    if(!data.run) data.run = {};
-    if(!data.smoke[today]) data.smoke[today] = {count:0};
-    if(!data.run[today]) data.run[today] = {km:0,hour:0};
-}
+/* ================= SMOKE ================= */
 
-/* SMOKE */
-function addSmoke(){
-    ensureStructure();
-    data.smoke[today].count++;
-    saveData();
-    render();
-}
+function renderSmoke(){
 
-/* RUN */
-function addRun(){
-    const km = parseFloat(document.getElementById("kmInput").value);
-    const hour = parseFloat(document.getElementById("hourInput").value);
-    if(!km || !hour) return;
-
-    ensureStructure();
-    data.run[today].km += km;
-    data.run[today].hour += hour;
-    saveData();
-    render();
-}
-
-/* RENDER UI */
-function render(){
-
-    ensureStructure();
-
-    document.getElementById("smokeBox").innerHTML = `
-        <h3>🚬 Hôm nay (${today})</h3>
-        <p>Số lần: ${data.smoke[today].count}</p>
-        <button class="btn-add" onclick="addSmoke()">+1 lần</button>
+    document.getElementById("smokeBox").innerHTML=`
+        <h3>🚬 Hút thuốc</h3>
+        <input type="date" id="smokeDate">
+        <button class="btn-add" onclick="addSmoke()">Thêm 1 lần</button>
+        <button class="btn-undo" onclick="undoSmoke()">Hoàn tác</button>
+        <div id="smokeContent"></div>
     `;
 
-    document.getElementById("runBox").innerHTML = `
-        <h3>🏃 Hôm nay (${today})</h3>
-        <p>${data.run[today].km} km | ${data.run[today].hour} giờ</p>
+    document.getElementById("smokeDate").value=new Date().toISOString().split("T")[0];
+    updateSmokeUI();
+}
+
+function addSmoke(){
+    const date=document.getElementById("smokeDate").value;
+    if(!data.smoke) data.smoke={};
+    if(!data.smoke[date]) data.smoke[date]={count:0,history:[]};
+
+    data.smoke[date].count++;
+    data.smoke[date].history.unshift(new Date().toLocaleTimeString());
+
+    saveData();
+    updateSmokeUI();
+}
+
+function undoSmoke(){
+    const date=document.getElementById("smokeDate").value;
+    if(data.smoke && data.smoke[date] && data.smoke[date].count>0){
+        data.smoke[date].count--;
+        data.smoke[date].history.shift();
+        saveData();
+        updateSmokeUI();
+    }
+}
+
+function updateSmokeUI(){
+    const date=document.getElementById("smokeDate").value;
+    let html=`<h4>Số lần ngày ${date}: ${data.smoke?.[date]?.count||0}</h4>`;
+
+    html+="<div>";
+    if(data.smoke?.[date]){
+        data.smoke[date].history.forEach((t,i)=>{
+            html+=`<div>Lần ${data.smoke[date].history.length-i} - ${t}</div>`;
+        });
+    }
+    html+="</div><h4>Thống kê các ngày</h4>";
+
+    for(let d in data.smoke){
+        html+=`<div>${d} : ${data.smoke[d].count} lần</div>`;
+    }
+
+    document.getElementById("smokeContent").innerHTML=html;
+}
+
+/* ================= RUN ================= */
+
+function renderRun(){
+
+    document.getElementById("runBox").innerHTML=`
+        <h3>🏃 Chạy bộ</h3>
+        <input type="date" id="runDate">
+        <br>
         <input type="number" id="kmInput" placeholder="Km">
         <input type="number" id="hourInput" placeholder="Giờ">
         <button class="btn-add" onclick="addRun()">Lưu</button>
+        <button class="btn-undo" onclick="undoRun()">Hoàn tác</button>
+        <div id="runContent"></div>
     `;
+
+    document.getElementById("runDate").value=new Date().toISOString().split("T")[0];
+    updateRunUI();
+}
+
+function addRun(){
+    const date=document.getElementById("runDate").value;
+    const km=parseFloat(document.getElementById("kmInput").value);
+    const hour=parseFloat(document.getElementById("hourInput").value);
+    if(!km||!hour) return;
+
+    if(!data.run) data.run={};
+    if(!data.run[date]) data.run[date]={sessions:[]};
+
+    data.run[date].sessions.unshift({
+        km:km,
+        hour:hour,
+        time:new Date().toLocaleTimeString()
+    });
+
+    saveData();
+    updateRunUI();
+}
+
+function undoRun(){
+    const date=document.getElementById("runDate").value;
+    if(data.run?.[date]?.sessions.length>0){
+        data.run[date].sessions.shift();
+        saveData();
+        updateRunUI();
+    }
+}
+
+function updateRunUI(){
+    const date=document.getElementById("runDate").value;
+    let totalKm=0,totalHour=0;
+    let html="";
+
+    if(data.run?.[date]){
+        data.run[date].sessions.forEach(s=>{
+            totalKm+=s.km;
+            totalHour+=s.hour;
+        });
+
+        html+=`<h4>Tổng ngày ${date}: ${totalKm} km | ${totalHour} giờ</h4>`;
+
+        data.run[date].sessions.forEach((s,i)=>{
+            html+=`<div>Buổi ${data.run[date].sessions.length-i} - ${s.km} km | ${s.hour} giờ | ${s.time}</div>`;
+        });
+    }else{
+        html+=`<h4>Tổng ngày ${date}: 0 km | 0 giờ</h4>`;
+    }
+
+    html+="<h4>Thống kê các ngày</h4>";
+
+    for(let d in data.run){
+        let km=0,hr=0;
+        data.run[d].sessions.forEach(s=>{
+            km+=s.km; hr+=s.hour;
+        });
+        html+=`<div>${d} : ${km} km | ${hr} giờ</div>`;
+    }
+
+    document.getElementById("runContent").innerHTML=html;
 }
 
 /* TOGGLE */
 document.getElementById("smokeBtn").onclick=()=>{
     document.getElementById("smokeBox").classList.toggle("hidden");
 };
-
 document.getElementById("runBtn").onclick=()=>{
     document.getElementById("runBox").classList.toggle("hidden");
 };
 
-window.addEventListener("load", loadData);
+window.addSmoke=addSmoke;
+window.undoSmoke=undoSmoke;
+window.addRun=addRun;
+window.undoRun=undoRun;
 
-window.addSmoke = addSmoke;
-window.addRun = addRun;
+window.onload=loadData;
 
 </script>
-
 </body>
 </html>
