@@ -137,22 +137,19 @@ function renderSmoke(){
  smokeBox.innerHTML=`
  <h3>🚬 Hút thuốc</h3>
  <input type="date" id="smokeDate">
- <button class="btn-add" id="addSmokeBtn">Thêm</button>
- <button class="btn-undo" id="undoSmokeBtn">Hoàn tác</button>
+ <button class="btn-add" onclick="addSmoke()">Thêm</button>
+ <button class="btn-undo" onclick="undoSmoke()">Hoàn tác</button>
  <br><br>
  <input type="month" id="smokeMonth">
- <button id="smokeMonthBtn">📊 Thống kê tháng</button>
+ <button onclick="toggleSmokeMonth()">📊 Thống kê tháng</button>
  <div id="smokeDay"></div>
  <div id="smokeMonthBox" class="slide"></div>
  `;
  document.getElementById("smokeDate").value=new Date().toISOString().split("T")[0];
- document.getElementById("addSmokeBtn").onclick=addSmoke;
- document.getElementById("undoSmokeBtn").onclick=undoSmoke;
- document.getElementById("smokeMonthBtn").onclick=toggleSmokeMonth;
  updateSmokeDay();
 }
 
-function addSmoke(){
+window.addSmoke=function(){
  const d=document.getElementById("smokeDate").value;
  if(!data.smoke[d]) data.smoke[d]={count:0,history:[]};
  data.smoke[d].count++;
@@ -160,7 +157,7 @@ function addSmoke(){
  saveData();updateSmokeDay();
 }
 
-function undoSmoke(){
+window.undoSmoke=function(){
  const d=document.getElementById("smokeDate").value;
  if(data.smoke[d]?.count>0){
   data.smoke[d].count--;
@@ -180,39 +177,49 @@ function updateSmokeDay(){
  document.getElementById("smokeDay").innerHTML=html;
 }
 
-function toggleSmokeMonth(){
+window.toggleSmokeMonth=function(){
  const box=document.getElementById("smokeMonthBox");
  const day=document.getElementById("smokeDay");
-
  box.classList.toggle("active");
-
- if(box.classList.contains("active")){
-  day.style.display="none";
- }else{
-  day.style.display="block";
- }
-
+ day.style.display=box.classList.contains("active")?"none":"block";
  updateSmokeMonth();
 }
 
 function updateSmokeMonth(){
  const m=document.getElementById("smokeMonth").value;
- if(!m) return;
- let total=0,html=`<h4>🔥 Tháng ${m}</h4>`;
+ if(!m)return;
+
+ let total=0;
+ let html=`<h4>🔥 Tháng ${m}</h4>`;
+
  Object.keys(data.smoke).forEach(d=>{
   if(d.startsWith(m)){
    total+=data.smoke[d].count;
-   html+=`<div>${d}: ${data.smoke[d].count} lần</div>`;
+   html+=`<div>📅 ${d}: ${data.smoke[d].count} lần</div>`;
   }
  });
- const goal=parseInt(localStorage.getItem("smokeGoal")||50);
- const percent=Math.min((total/goal)*100,100);
+
+ let goal=parseInt(localStorage.getItem("smokeGoal")||50);
+ let percent=Math.min((total/goal)*100,100);
+
  html+=`
- <hr>Tổng: ${total} lần<br>
- 🎯 Mục tiêu ≤ ${goal}
+ <hr>
+ <strong>Tổng: ${total} lần</strong><br>
+ 🎯 Mục tiêu ≤ ${goal} lần
  <div class="progress"><div class="progress-bar" style="width:${percent}%"></div></div>
+ <br><br>
+ <input type="number" id="newSmokeGoal" placeholder="Nhập mục tiêu mới">
+ <button onclick="setSmokeGoal()">Lưu mục tiêu</button>
  `;
  document.getElementById("smokeMonthBox").innerHTML=html;
+}
+
+window.setSmokeGoal=function(){
+ const val=document.getElementById("newSmokeGoal").value;
+ if(val>0){
+  localStorage.setItem("smokeGoal",val);
+  updateSmokeMonth();
+ }
 }
 
 /* ================= RUN ================= */
@@ -224,22 +231,19 @@ function renderRun(){
  <input type="number" id="kmInput" placeholder="Km">
  <input type="number" id="hInput" placeholder="Giờ">
  <input type="number" id="mInput" placeholder="Phút">
- <button class="btn-add" id="addRunBtn">Lưu</button>
- <button class="btn-undo" id="undoRunBtn">Hoàn tác</button>
+ <button class="btn-add" onclick="addRun()">Lưu</button>
+ <button class="btn-undo" onclick="undoRun()">Hoàn tác</button>
  <br><br>
  <input type="month" id="runMonth">
- <button id="runMonthBtn">📊 Thống kê tháng</button>
+ <button onclick="toggleRunMonth()">📊 Thống kê tháng</button>
  <div id="runDay"></div>
  <div id="runMonthBox" class="slide"></div>
  `;
  document.getElementById("runDate").value=new Date().toISOString().split("T")[0];
- document.getElementById("addRunBtn").onclick=addRun;
- document.getElementById("undoRunBtn").onclick=undoRun;
- document.getElementById("runMonthBtn").onclick=toggleRunMonth;
  updateRunDay();
 }
 
-function addRun(){
+window.addRun=function(){
  const d=document.getElementById("runDate").value;
  if(!data.run[d]) data.run[d]={sessions:[]};
  data.run[d].sessions.unshift({
@@ -250,7 +254,7 @@ function addRun(){
  saveData();updateRunDay();
 }
 
-function undoRun(){
+window.undoRun=function(){
  const d=document.getElementById("runDate").value;
  if(data.run[d]?.sessions.length>0){
   data.run[d].sessions.shift();
@@ -272,37 +276,57 @@ function updateRunDay(){
  `<h4>${d}: ${totalKm} km | ${H}h ${M}p</h4>`;
 }
 
-function toggleRunMonth(){
+window.toggleRunMonth=function(){
  const box=document.getElementById("runMonthBox");
  const day=document.getElementById("runDay");
-
  box.classList.toggle("active");
-
- if(box.classList.contains("active")){
-  day.style.display="none";
- }else{
-  day.style.display="block";
- }
-
+ day.style.display=box.classList.contains("active")?"none":"block";
  updateRunMonth();
 }
 
 function updateRunMonth(){
  const m=document.getElementById("runMonth").value;
  if(!m)return;
+
  let totalKm=0,totalMin=0;
+ let html=`<h4>🔥 Tháng ${m}</h4>`;
+
  Object.keys(data.run).forEach(d=>{
   if(d.startsWith(m)){
+   let dayKm=0,dayMin=0;
    data.run[d].sessions.forEach(s=>{
-    totalKm+=s.km;
-    totalMin+=s.h*60+s.m;
+    dayKm+=s.km;
+    dayMin+=s.h*60+s.m;
    });
+   totalKm+=dayKm;
+   totalMin+=dayMin;
+   let H=Math.floor(dayMin/60),M=dayMin%60;
+   html+=`<div>📅 ${d}: ${dayKm} km | ${H}h ${M}p</div>`;
   }
  });
+
  let H=Math.floor(totalMin/60),M=totalMin%60;
- document.getElementById("runMonthBox").innerHTML=
- `<h4>🔥 Tháng ${m}</h4>
- Tổng: ${totalKm} km | ${H}h ${M}p`;
+ let goal=parseInt(localStorage.getItem("runGoal")||100);
+ let percent=Math.min((totalKm/goal)*100,100);
+
+ html+=`
+ <hr>
+ <strong>Tổng: ${totalKm} km | ${H}h ${M}p</strong><br>
+ 🎯 Mục tiêu ${goal} km
+ <div class="progress"><div class="progress-bar" style="width:${percent}%"></div></div>
+ <br><br>
+ <input type="number" id="newRunGoal" placeholder="Nhập mục tiêu km">
+ <button onclick="setRunGoal()">Lưu mục tiêu</button>
+ `;
+ document.getElementById("runMonthBox").innerHTML=html;
+}
+
+window.setRunGoal=function(){
+ const val=document.getElementById("newRunGoal").value;
+ if(val>0){
+  localStorage.setItem("runGoal",val);
+  updateRunMonth();
+ }
 }
 
 /* INIT */
