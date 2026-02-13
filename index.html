@@ -6,293 +6,260 @@
 <title>Web của Hữu Thiện</title>
 
 <style>
-body{font-family:Arial;text-align:center;margin-top:30px;background:#f4f6f9;}
-button{padding:8px 14px;margin:5px;border:none;border-radius:8px;cursor:pointer;}
-.btn-main{background:#2196F3;color:white;}
-.btn-add{background:#4CAF50;color:white;}
-.btn-undo{background:#ff9800;color:white;}
-.box{width:65%;margin:auto;margin-top:15px;background:white;padding:12px;border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.1);text-align:left;}
-input{padding:6px;margin:5px;}
+:root{
+    --bg:#0f0f0f;
+    --box:#1a1a1a;
+    --border:#333;
+    --text:#ffffff;
+    --muted:#aaaaaa;
+    --green:#2ecc71;
+    --orange:#e67e22;
+    --blue:#2196F3;
+}
+
+body{
+    font-family:Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    text-align:center;
+    margin:0;
+    padding:30px 0;
+}
+
+h2,h3,h4{margin:10px 0;}
+
+button{
+    padding:8px 14px;
+    margin:5px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+    transition:0.2s;
+}
+
+button:hover{transform:scale(1.05);}
+
+.btn-main{background:var(--blue);color:white;}
+.btn-add{background:var(--green);color:black;}
+.btn-undo{background:var(--orange);color:black;}
+
+.box{
+    width:70%;
+    margin:15px auto;
+    background:var(--box);
+    padding:15px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    text-align:left;
+}
+
+input{
+    padding:7px;
+    margin:5px;
+    background:#121212;
+    border:1px solid var(--border);
+    color:white;
+    border-radius:6px;
+}
+
 .hidden{display:none;}
-.slideBox{max-height:0;overflow:hidden;transition:max-height 0.4s ease;}
-.slideBox.active{max-height:900px;}
-.progress{background:#ddd;height:10px;border-radius:5px;}
-.progress-bar{height:10px;border-radius:5px;background:green;}
+
+.slide{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.4s ease;
+}
+
+.slide.active{max-height:1000px;}
+
+.progress{
+    background:#333;
+    height:8px;
+    border-radius:5px;
+    margin-top:5px;
+}
+
+.progress-bar{
+    height:8px;
+    border-radius:5px;
+    background:var(--green);
+}
 </style>
 </head>
 <body>
 
-<div id="loginScreen" style="margin-top:100px;">
+<div id="login">
 <h2>🔐 Nhập mật khẩu</h2>
-<input type="password" id="passwordInput">
+<input type="password" id="passInput">
 <br><br>
-<button onclick="checkPassword()">Đăng nhập</button>
+<button onclick="App.login()">Đăng nhập</button>
 <p id="loginError" style="color:red;"></p>
 </div>
 
-<div id="appContent" style="display:none;">
+<div id="app" class="hidden">
 <h2>🔥 Web của Hữu Thiện</h2>
-<p style="color:gray;">Hệ thống theo dõi cá nhân 🚬🏃</p>
-<button onclick="logout()">🚪 Đăng xuất</button>
+<p style="color:var(--muted)">Hệ thống theo dõi cá nhân 🚬🏃</p>
+<button onclick="App.logout()">🚪 Đăng xuất</button>
 <br><br>
 
-<button id="smokeBtn" class="btn-main">🚬 Hút thuốc</button>
-<button id="runBtn" class="btn-main">🏃 Chạy bộ</button>
+<button class="btn-main" onclick="UI.toggle('smoke')">🚬 Hút thuốc</button>
+<button class="btn-main" onclick="UI.toggle('run')">🏃 Chạy bộ</button>
 
-<div id="smokeBox" class="hidden box"></div>
-<div id="runBox" class="hidden box"></div>
+<div id="smokeBox" class="box hidden"></div>
+<div id="runBox" class="box hidden"></div>
 </div>
-
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc }
 from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDFgBUsVGUWoj-b2qGj4DyUpALlch2MSQ",
-  authDomain: "bhtz-a7f60.firebaseapp.com",
-  projectId: "bhtz-a7f60",
-  storageBucket: "bhtz-a7f60.firebasestorage.app",
-  messagingSenderId: "708884006477",
-  appId: "1:708884006477:web:de2a3e37f6513d6676be04"
+const firebaseConfig={
+ apiKey:"AIzaSyDFgBUsVGUWoj-b2qGj4DyUpALlch2MSQ",
+ authDomain:"bhtz-a7f60.firebaseapp.com",
+ projectId:"bhtz-a7f60",
+ storageBucket:"bhtz-a7f60.firebasestorage.app",
+ messagingSenderId:"708884006477",
+ appId:"1:708884006477:web:de2a3e37f6513d6676be04"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const firebaseApp=initializeApp(firebaseConfig);
+const db=getFirestore(firebaseApp);
 
-let data={};
+const App={
+ PASS:"15102002",
+ data:{smoke:{},run:{}},
 
-/* PASSWORD */
-const PASS="15102002";
-function checkPassword(){
- if(passwordInput.value===PASS){
-  localStorage.setItem("auth","true");
-  showApp();
- }else loginError.innerText="Sai mật khẩu!";
-}
-function showApp(){loginScreen.style.display="none";appContent.style.display="block";}
-function logout(){localStorage.removeItem("auth");location.reload();}
-window.checkPassword=checkPassword;
-window.logout=logout;
-
-/* FIRESTORE */
-async function loadData(){
- const snap=await getDoc(doc(db,"tracker","main"));
- if(snap.exists()) data=snap.data();
- if(!data.smoke) data.smoke={};
- if(!data.run) data.run={};
- renderSmoke();
- renderRun();
-}
-async function saveData(){
- await setDoc(doc(db,"tracker","main"),data);
-}
-/* ================= SMOKE ================= */
-
-function renderSmoke(){
- smokeBox.innerHTML=`
- <h3>🚬 Hút thuốc</h3>
- <input type="date" id="smokeDate">
- <button class="btn-add" onclick="addSmoke()">Thêm</button>
- <button class="btn-undo" onclick="undoSmoke()">Hoàn tác</button>
-
- <br><br>
- <input type="month" id="smokeMonth">
- <button onclick="toggleSmokeMonth()">📊 Thống kê tháng</button>
-
- <div id="smokeContent"></div>
- <div id="smokeMonthBox" class="slideBox"></div>
- `;
- smokeDate.value=new Date().toISOString().split("T")[0];
- updateSmokeUI();
-}
-
-function addSmoke(){
- let d=smokeDate.value;
- if(!data.smoke[d]) data.smoke[d]={count:0,history:[]};
- data.smoke[d].count++;
- data.smoke[d].history.unshift(new Date().toLocaleTimeString());
- saveData();updateSmokeUI();
-}
-
-function undoSmoke(){
- let d=smokeDate.value;
- if(data.smoke[d]?.count>0){
-  data.smoke[d].count--;
-  data.smoke[d].history.shift();
-  saveData();updateSmokeUI();
- }
-}
-
-function updateSmokeUI(){
- let d=smokeDate.value;
- let html=`<h4>${d}: ${data.smoke[d]?.count||0} lần</h4>`;
- if(data.smoke[d]){
-  data.smoke[d].history.forEach((t,i)=>{
-   html+=`<div>Lần ${data.smoke[d].history.length-i} - ${t}</div>`;
-  });
- }
- smokeContent.innerHTML=`<div id="smokeDayBox">${html}</div>`;
-}
-
-function toggleSmokeMonth(){
- smokeMonthBox.classList.toggle("active");
- smokeDayBox.style.display=smokeMonthBox.classList.contains("active")?"none":"block";
- updateSmokeMonth();
-}
-
-function updateSmokeMonth(){
- let m=smokeMonth.value;if(!m) return;
- let total=0,html=`<h4>🔥 Tháng ${m}</h4>`;
- for(let d in data.smoke){
-  if(d.startsWith(m)){
-   html+=`<div>📅 ${d}: ${data.smoke[d].count} lần</div>`;
-   total+=data.smoke[d].count;
+ async init(){
+  if(localStorage.getItem("auth")==="true"){
+   login.classList.add("hidden");
+   app.classList.remove("hidden");
   }
+  await this.load();
+  Features.renderSmoke();
+  Features.renderRun();
+ },
+
+ login(){
+  if(passInput.value===this.PASS){
+   localStorage.setItem("auth","true");
+   login.classList.add("hidden");
+   app.classList.remove("hidden");
+  }else loginError.innerText="Sai mật khẩu!";
+ },
+
+ logout(){
+  localStorage.removeItem("auth");
+  location.reload();
+ },
+
+ async load(){
+  const snap=await getDoc(doc(db,"tracker","main"));
+  if(snap.exists()) this.data=snap.data();
+  if(!this.data.smoke) this.data.smoke={};
+  if(!this.data.run) this.data.run={};
+ },
+
+ async save(){
+  await setDoc(doc(db,"tracker","main"),this.data);
  }
-
- let goal=parseInt(localStorage.getItem("smokeGoal")||40);
- let percent=Math.min((total/goal)*100,100);
-
- html+=`
- <hr><strong>Tổng: ${total} lần</strong><br>
- 🎯 Mục tiêu ≤ ${goal} lần<br>
- <div class="progress"><div class="progress-bar" style="width:${percent}%"></div></div>
- <br><input type="number" id="newSmokeGoal" placeholder="Mục tiêu mới">
- <button onclick="setSmokeGoal()">Lưu</button>
- `;
- smokeMonthBox.innerHTML=html;
-}
-
-function setSmokeGoal(){
- localStorage.setItem("smokeGoal",newSmokeGoal.value);
- updateSmokeMonth();
-}
-
-window.addSmoke=addSmoke;
-window.undoSmoke=undoSmoke;
-window.toggleSmokeMonth=toggleSmokeMonth;
-window.setSmokeGoal=setSmokeGoal;
-/* ================= RUN ================= */
-
-function renderRun(){
- runBox.innerHTML=`
- <h3>🏃 Chạy bộ</h3>
- <input type="date" id="runDate"><br>
- <input type="number" id="kmInput" placeholder="Km">
- <input type="number" id="hourInput" placeholder="Giờ">
- <input type="number" id="minuteInput" placeholder="Phút">
- <button class="btn-add" onclick="addRun()">Lưu</button>
- <button class="btn-undo" onclick="undoRun()">Hoàn tác</button>
-
- <br><br>
- <input type="month" id="runMonth">
- <button onclick="toggleRunMonth()">📊 Thống kê tháng</button>
-
- <div id="runContent"></div>
- <div id="runMonthBox" class="slideBox"></div>
- `;
- runDate.value=new Date().toISOString().split("T")[0];
- updateRunUI();
-}
-
-function addRun(){
- let d=runDate.value;
- if(!data.run[d]) data.run[d]={sessions:[]};
- data.run[d].sessions.unshift({
-  km:parseFloat(kmInput.value)||0,
-  hour:parseInt(hourInput.value)||0,
-  minute:parseInt(minuteInput.value)||0,
-  time:new Date().toLocaleTimeString()
- });
- saveData();updateRunUI();
-}
-
-function undoRun(){
- let d=runDate.value;
- if(data.run[d]?.sessions.length>0){
-  data.run[d].sessions.shift();
-  saveData();updateRunUI();
- }
-}
-
-function updateRunUI(){
- let d=runDate.value;
- let totalKm=0,totalMin=0,html="";
- if(data.run[d]){
-  data.run[d].sessions.forEach(s=>{
-   totalKm+=s.km;
-   totalMin+=s.hour*60+s.minute;
-  });
-  let h=Math.floor(totalMin/60),m=totalMin%60;
-  html+=`<h4>${d}: ${totalKm} km | ${h}h ${m}p</h4>`;
-  data.run[d].sessions.forEach((s,i)=>{
-   html+=`<div>Buổi ${data.run[d].sessions.length-i} - ${s.km}km | ${s.hour}h ${s.minute}p | ${s.time}</div>`;
-  });
- }
- runContent.innerHTML=`<div id="runDayBox">${html}</div>`;
-}
-function toggleRunMonth(){
- runMonthBox.classList.toggle("active");
- runDayBox.style.display=runMonthBox.classList.contains("active")?"none":"block";
- updateRunMonth();
-}
-
-function updateRunMonth(){
- let m=runMonth.value;if(!m) return;
- let totalKm=0,totalMin=0,days=[];
- for(let d in data.run){
-  if(d.startsWith(m)){
-   let dayKm=0,dayMin=0;
-   data.run[d].sessions.forEach(s=>{
-    dayKm+=s.km;dayMin+=s.hour*60+s.minute;
-   });
-   if(dayKm>0) days.push(d);
-   totalKm+=dayKm;totalMin+=dayMin;
-  }
- }
-
- days.sort();
- let streak=0;
- let today=new Date();
- for(let i=days.length-1;i>=0;i--){
-  let diff=(today-new Date(days[i]))/(1000*60*60*24);
-  if(diff<=streak+1) streak++; else break;
- }
-
- let H=Math.floor(totalMin/60),M=totalMin%60;
- let goal=parseInt(localStorage.getItem("runGoal")||100);
- let percent=Math.min((totalKm/goal)*100,100);
-
- runMonthBox.innerHTML=`
- <h4>🔥 Tháng ${m}</h4>
- <strong>Tổng: ${totalKm} km | ${H}h ${M}p</strong><br>
- 🔥 Streak: ${streak} ngày<br><br>
- 🎯 Mục tiêu ${goal} km<br>
- <div class="progress"><div class="progress-bar" style="width:${percent}%"></div></div>
- <br><input type="number" id="newRunGoal" placeholder="Mục tiêu km">
- <button onclick="setRunGoal()">Lưu</button>
- `;
-}
-
-function setRunGoal(){
- localStorage.setItem("runGoal",newRunGoal.value);
- updateRunMonth();
-}
-
-window.addRun=addRun;
-window.undoRun=undoRun;
-window.toggleRunMonth=toggleRunMonth;
-window.setRunGoal=setRunGoal;
-
-/* TOGGLE BUTTONS */
-smokeBtn.onclick=()=>smokeBox.classList.toggle("hidden");
-runBtn.onclick=()=>runBox.classList.toggle("hidden");
-
-/* INIT */
-window.onload=async()=>{
- if(localStorage.getItem("auth")==="true") showApp();
- await loadData();
 };
-</script></body></html>
+
+const UI={
+ toggle(type){
+  document.getElementById(type+"Box").classList.toggle("hidden");
+ }
+};
+const Features={
+
+ renderSmoke(){
+  smokeBox.innerHTML=`
+  <h3>🚬 Hút thuốc</h3>
+  <input type="date" id="smokeDate">
+  <button class="btn-add" onclick="Features.addSmoke()">Thêm</button>
+  <button class="btn-undo" onclick="Features.undoSmoke()">Hoàn tác</button>
+
+  <br><br>
+  <input type="month" id="smokeMonth">
+  <button onclick="Features.toggleSmokeMonth()">📊 Thống kê tháng</button>
+
+  <div id="smokeDay"></div>
+  <div id="smokeMonthBox" class="slide"></div>
+  `;
+  smokeDate.value=new Date().toISOString().split("T")[0];
+  this.updateSmokeDay();
+ },
+
+ addSmoke(){
+  let d=smokeDate.value;
+  if(!App.data.smoke[d]) App.data.smoke[d]={count:0,history:[]};
+  App.data.smoke[d].count++;
+  App.data.smoke[d].history.unshift(new Date().toLocaleTimeString());
+  App.save(); this.updateSmokeDay();
+ },
+
+ undoSmoke(){
+  let d=smokeDate.value;
+  if(App.data.smoke[d]?.count>0){
+   App.data.smoke[d].count--;
+   App.data.smoke[d].history.shift();
+   App.save(); this.updateSmokeDay();
+  }
+ },
+
+ updateSmokeDay(){
+  let d=smokeDate.value;
+  let c=App.data.smoke[d]?.count||0;
+  let html=`<h4>${d}: ${c} lần</h4>`;
+  smokeDay.innerHTML=html;
+ },
+
+ toggleSmokeMonth(){
+  smokeMonthBox.classList.toggle("active");
+ },
+
+ /* RUN */
+
+ renderRun(){
+  runBox.innerHTML=`
+  <h3>🏃 Chạy bộ</h3>
+  <input type="date" id="runDate"><br>
+  <input type="number" id="kmInput" placeholder="Km">
+  <input type="number" id="hourInput" placeholder="Giờ">
+  <input type="number" id="minInput" placeholder="Phút">
+  <button class="btn-add" onclick="Features.addRun()">Lưu</button>
+  <button class="btn-undo" onclick="Features.undoRun()">Hoàn tác</button>
+  <div id="runDay"></div>
+  `;
+  runDate.value=new Date().toISOString().split("T")[0];
+ },
+
+ addRun(){
+  let d=runDate.value;
+  if(!App.data.run[d]) App.data.run[d]={sessions:[]};
+  App.data.run[d].sessions.unshift({
+   km:+kmInput.value||0,
+   h:+hourInput.value||0,
+   m:+minInput.value||0,
+   time:new Date().toLocaleTimeString()
+  });
+  App.save();
+ },
+
+ undoRun(){
+  let d=runDate.value;
+  if(App.data.run[d]?.sessions.length>0){
+   App.data.run[d].sessions.shift();
+   App.save();
+  }
+ }
+};
+
+window.App=App;
+window.UI=UI;
+window.Features=Features;
+
+window.onload=()=>App.init();
+</script>
+</body>
+</html>
