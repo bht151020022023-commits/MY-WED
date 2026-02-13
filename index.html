@@ -7,40 +7,40 @@
 
 <style>
 body{
-  font-family:Arial;
-  background:#0f0f0f;
-  color:white;
-  text-align:center;
-  margin:0;
-  padding:30px 0;
+ font-family:Arial;
+ background:#0f0f0f;
+ color:white;
+ text-align:center;
+ margin:0;
+ padding:30px 0;
 }
 button{
-  padding:8px 14px;
-  margin:5px;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:bold;
+ padding:8px 14px;
+ margin:5px;
+ border:none;
+ border-radius:8px;
+ cursor:pointer;
+ font-weight:bold;
 }
 .btn-main{background:#2196F3;color:white;}
 .btn-add{background:#2ecc71;color:black;}
 .btn-undo{background:#e67e22;color:black;}
 .box{
-  width:70%;
-  margin:15px auto;
-  background:#1a1a1a;
-  padding:15px;
-  border-radius:12px;
-  border:1px solid #333;
-  text-align:left;
+ width:70%;
+ margin:15px auto;
+ background:#1a1a1a;
+ padding:15px;
+ border-radius:12px;
+ border:1px solid #333;
+ text-align:left;
 }
 input{
-  padding:6px;
-  margin:5px;
-  background:#121212;
-  border:1px solid #333;
-  color:white;
-  border-radius:6px;
+ padding:6px;
+ margin:5px;
+ background:#121212;
+ border:1px solid #333;
+ color:white;
+ border-radius:6px;
 }
 .hidden{display:none;}
 .slide{max-height:0;overflow:hidden;transition:max-height .4s ease;}
@@ -76,7 +76,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebas
 import { getFirestore, doc, setDoc, getDoc }
 from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-/* DOM SAFE BIND */
+/* DOM */
 const loginDiv=document.getElementById("login");
 const appDiv=document.getElementById("app");
 const passInput=document.getElementById("passInput");
@@ -118,7 +118,7 @@ logoutBtn.onclick=()=>{
 smokeToggle.onclick=()=>smokeBox.classList.toggle("hidden");
 runToggle.onclick=()=>runBox.classList.toggle("hidden");
 
-/* FIRESTORE LOAD */
+/* FIRESTORE */
 async function loadData(){
  const snap=await getDoc(doc(db,"tracker","main"));
  if(snap.exists()) data=snap.data();
@@ -131,7 +131,8 @@ async function saveData(){
  await setDoc(doc(db,"tracker","main"),data);
 }
 
-/* SMOKE FULL */
+/* ================= SMOKE ================= */
+
 function renderSmoke(){
  smokeBox.innerHTML=`
  <h3>🚬 Hút thuốc</h3>
@@ -150,6 +151,7 @@ function renderSmoke(){
  document.getElementById("smokeMonthBtn").onclick=toggleSmokeMonth;
  updateSmokeDay();
 }
+
 function addSmoke(){
  const d=document.getElementById("smokeDate").value;
  if(!data.smoke[d]) data.smoke[d]={count:0,history:[]};
@@ -157,6 +159,7 @@ function addSmoke(){
  data.smoke[d].history.unshift(new Date().toLocaleTimeString());
  saveData();updateSmokeDay();
 }
+
 function undoSmoke(){
  const d=document.getElementById("smokeDate").value;
  if(data.smoke[d]?.count>0){
@@ -165,6 +168,7 @@ function undoSmoke(){
   saveData();updateSmokeDay();
  }
 }
+
 function updateSmokeDay(){
  const d=document.getElementById("smokeDate").value;
  let html=`<h4>${d}: ${data.smoke[d]?.count||0} lần</h4>`;
@@ -175,11 +179,22 @@ function updateSmokeDay(){
  }
  document.getElementById("smokeDay").innerHTML=html;
 }
+
 function toggleSmokeMonth(){
  const box=document.getElementById("smokeMonthBox");
+ const day=document.getElementById("smokeDay");
+
  box.classList.toggle("active");
+
+ if(box.classList.contains("active")){
+  day.style.display="none";
+ }else{
+  day.style.display="block";
+ }
+
  updateSmokeMonth();
 }
+
 function updateSmokeMonth(){
  const m=document.getElementById("smokeMonth").value;
  if(!m) return;
@@ -190,7 +205,7 @@ function updateSmokeMonth(){
    html+=`<div>${d}: ${data.smoke[d].count} lần</div>`;
   }
  });
- const goal=parseInt(localStorage.getItem("smokeGoal")||40);
+ const goal=parseInt(localStorage.getItem("smokeGoal")||50);
  const percent=Math.min((total/goal)*100,100);
  html+=`
  <hr>Tổng: ${total} lần<br>
@@ -200,7 +215,8 @@ function updateSmokeMonth(){
  document.getElementById("smokeMonthBox").innerHTML=html;
 }
 
-/* RUN FULL + STREAK */
+/* ================= RUN ================= */
+
 function renderRun(){
  runBox.innerHTML=`
  <h3>🏃 Chạy bộ</h3>
@@ -222,6 +238,7 @@ function renderRun(){
  document.getElementById("runMonthBtn").onclick=toggleRunMonth;
  updateRunDay();
 }
+
 function addRun(){
  const d=document.getElementById("runDate").value;
  if(!data.run[d]) data.run[d]={sessions:[]};
@@ -232,6 +249,7 @@ function addRun(){
  });
  saveData();updateRunDay();
 }
+
 function undoRun(){
  const d=document.getElementById("runDate").value;
  if(data.run[d]?.sessions.length>0){
@@ -239,6 +257,7 @@ function undoRun(){
   saveData();updateRunDay();
  }
 }
+
 function updateRunDay(){
  const d=document.getElementById("runDate").value;
  let totalKm=0,totalMin=0;
@@ -252,31 +271,38 @@ function updateRunDay(){
  document.getElementById("runDay").innerHTML=
  `<h4>${d}: ${totalKm} km | ${H}h ${M}p</h4>`;
 }
+
 function toggleRunMonth(){
  const box=document.getElementById("runMonthBox");
+ const day=document.getElementById("runDay");
+
  box.classList.toggle("active");
+
+ if(box.classList.contains("active")){
+  day.style.display="none";
+ }else{
+  day.style.display="block";
+ }
+
  updateRunMonth();
 }
+
 function updateRunMonth(){
  const m=document.getElementById("runMonth").value;
  if(!m)return;
- let totalKm=0,totalMin=0,days=[];
+ let totalKm=0,totalMin=0;
  Object.keys(data.run).forEach(d=>{
   if(d.startsWith(m)){
-   days.push(d);
    data.run[d].sessions.forEach(s=>{
     totalKm+=s.km;
     totalMin+=s.h*60+s.m;
    });
   }
  });
- days.sort();
- let streak=days.length; // simplified streak
  let H=Math.floor(totalMin/60),M=totalMin%60;
  document.getElementById("runMonthBox").innerHTML=
  `<h4>🔥 Tháng ${m}</h4>
- Tổng: ${totalKm} km | ${H}h ${M}p<br>
- 🔥 Streak: ${streak} ngày`;
+ Tổng: ${totalKm} km | ${H}h ${M}p`;
 }
 
 /* INIT */
