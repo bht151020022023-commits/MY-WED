@@ -6,47 +6,81 @@
 <title>Web của Hữu Thiện</title>
 
 <style>
+*{box-sizing:border-box;}
+
 body{
- font-family:Arial;
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
  background:#0f0f0f;
  color:white;
- text-align:center;
  margin:0;
- padding:30px 0;
+ padding:20px 10px;
+ text-align:center;
 }
+
+h2{margin-top:10px;font-size:22px;}
+
 button{
- padding:8px 14px;
- margin:5px;
+ padding:12px 16px;
+ margin:6px 4px;
  border:none;
- border-radius:8px;
+ border-radius:12px;
  cursor:pointer;
- font-weight:bold;
+ font-weight:600;
+ font-size:15px;
 }
+
 .btn-main{background:#2196F3;color:white;}
 .btn-add{background:#2ecc71;color:black;}
 .btn-undo{background:#e67e22;color:black;}
+
+button:active{transform:scale(0.96);}
+
 .box{
- width:70%;
+ width:100%;
+ max-width:700px;
  margin:15px auto;
  background:#1a1a1a;
- padding:15px;
- border-radius:12px;
- border:1px solid #333;
+ padding:16px;
+ border-radius:16px;
+ border:1px solid #2a2a2a;
  text-align:left;
 }
+
 input{
- padding:6px;
- margin:5px;
+ width:100%;
+ padding:12px;
+ margin:6px 0;
  background:#121212;
  border:1px solid #333;
  color:white;
- border-radius:6px;
+ border-radius:10px;
+ font-size:15px;
 }
+
 .hidden{display:none;}
-.slide{max-height:0;overflow:hidden;transition:max-height .4s ease;}
-.slide.active{max-height:2000px;}
-.progress{background:#333;height:8px;border-radius:5px;}
-.progress-bar{height:8px;border-radius:5px;background:#2ecc71;}
+
+.slide{
+ max-height:0;
+ overflow:hidden;
+ transition:max-height .35s ease;
+}
+.slide.active{max-height:3000px;}
+
+.progress{
+ background:#333;
+ height:8px;
+ border-radius:6px;
+ margin-top:6px;
+}
+.progress-bar{
+ height:8px;
+ border-radius:6px;
+ background:#2ecc71;
+}
+
+@media (max-width:600px){
+ button{width:100%;}
+}
 </style>
 </head>
 <body>
@@ -54,7 +88,7 @@ input{
 <div id="login">
 <h2>🔐 Nhập mật khẩu</h2>
 <input type="password" id="passInput">
-<br><br>
+<br>
 <button id="loginBtn">Đăng nhập</button>
 <p id="loginError" style="color:red;"></p>
 </div>
@@ -62,7 +96,6 @@ input{
 <div id="app" class="hidden">
 <h2>🔥 Web của Hữu Thiện</h2>
 <button id="logoutBtn">🚪 Đăng xuất</button>
-<br><br>
 
 <button class="btn-main" id="smokeToggle">🚬 Hút thuốc</button>
 <button class="btn-main" id="runToggle">🏃 Chạy bộ</button>
@@ -110,6 +143,7 @@ loginBtn.onclick=()=>{
   appDiv.classList.remove("hidden");
  }else document.getElementById("loginError").innerText="Sai mật khẩu!";
 };
+
 logoutBtn.onclick=()=>{
  localStorage.removeItem("auth");
  location.reload();
@@ -127,11 +161,12 @@ async function loadData(){
  renderSmoke();
  renderRun();
 }
+
 async function saveData(){
  await setDoc(doc(db,"tracker","main"),data);
 }
 
-/* ================= SMOKE ================= */
+/* ============ SMOKE ============ */
 
 function renderSmoke(){
  smokeBox.innerHTML=`
@@ -139,7 +174,7 @@ function renderSmoke(){
  <input type="date" id="smokeDate">
  <button class="btn-add" onclick="addSmoke()">Thêm</button>
  <button class="btn-undo" onclick="undoSmoke()">Hoàn tác</button>
- <br><br>
+ <br>
  <input type="month" id="smokeMonth">
  <button onclick="toggleSmokeMonth()">📊 Thống kê tháng</button>
  <div id="smokeDay"></div>
@@ -205,11 +240,11 @@ function updateSmokeMonth(){
  html+=`
  <hr>
  <strong>Tổng: ${total} lần</strong><br>
- 🎯 Mục tiêu ≤ ${goal} lần
+ 🎯 Mục tiêu ≤ ${goal}
  <div class="progress"><div class="progress-bar" style="width:${percent}%"></div></div>
- <br><br>
- <input type="number" id="newSmokeGoal" placeholder="Nhập mục tiêu mới">
- <button onclick="setSmokeGoal()">Lưu mục tiêu</button>
+ <br>
+ <input type="number" id="newSmokeGoal" placeholder="Mục tiêu mới">
+ <button onclick="setSmokeGoal()">Lưu</button>
  `;
  document.getElementById("smokeMonthBox").innerHTML=html;
 }
@@ -222,18 +257,18 @@ window.setSmokeGoal=function(){
  }
 }
 
-/* ================= RUN ================= */
+/* ============ RUN ============ */
 
 function renderRun(){
  runBox.innerHTML=`
  <h3>🏃 Chạy bộ</h3>
- <input type="date" id="runDate"><br>
+ <input type="date" id="runDate">
  <input type="number" id="kmInput" placeholder="Km">
  <input type="number" id="hInput" placeholder="Giờ">
  <input type="number" id="mInput" placeholder="Phút">
  <button class="btn-add" onclick="addRun()">Lưu</button>
  <button class="btn-undo" onclick="undoRun()">Hoàn tác</button>
- <br><br>
+ <br>
  <input type="month" id="runMonth">
  <button onclick="toggleRunMonth()">📊 Thống kê tháng</button>
  <div id="runDay"></div>
@@ -314,9 +349,9 @@ function updateRunMonth(){
  <strong>Tổng: ${totalKm} km | ${H}h ${M}p</strong><br>
  🎯 Mục tiêu ${goal} km
  <div class="progress"><div class="progress-bar" style="width:${percent}%"></div></div>
- <br><br>
- <input type="number" id="newRunGoal" placeholder="Nhập mục tiêu km">
- <button onclick="setRunGoal()">Lưu mục tiêu</button>
+ <br>
+ <input type="number" id="newRunGoal" placeholder="Mục tiêu km">
+ <button onclick="setRunGoal()">Lưu</button>
  `;
  document.getElementById("runMonthBox").innerHTML=html;
 }
